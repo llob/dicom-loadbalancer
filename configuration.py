@@ -1,6 +1,7 @@
 import os
 import json
 from typing import List
+import logging
 
 class WorkerSetConfiguration:
     def __init__(self, json_data: json) -> None:
@@ -112,6 +113,7 @@ class Configuration:
         self._scps: List[SCPConfiguration] = []
         self._core: CoreConfiguration = None
         self._worker_sets: List[WorkerSetConfiguration] = []
+        self._logger = logging.getLogger(__name__)
 
         if not os.path.exists(path):
             raise BaseException(f'{str} does not exist during attempt to load configuration')
@@ -129,7 +131,7 @@ class Configuration:
             raise BaseException(f'{path} is not a directory during attempt to load configuration')
 
     def _read_config_file(self, path) -> bool:
-        print(f'Reading config from {path}')
+        self._logger.info(f'Reading config from {path}')
         with open(path) as f:
             data = json.load(f)
             self._parse_config(data)
@@ -139,17 +141,17 @@ class Configuration:
             self._core = CoreConfiguration(config['core'])
         if 'worker-sets' in config:
             for worker_set in config['worker-sets']:
-                print('Creating worker set')
+                #print('Creating worker set')
                 worker_set = WorkerSetConfiguration(worker_set)
                 self._worker_sets.append(worker_set)
         if 'scps' in config:
             for scp in config['scps']:
-                print('Creating scp configuration')
+                #print('Creating scp configuration')
                 scp = SCPConfiguration(scp)
                 self._scps.append(scp)
         if 'workers' in config:
             for worker in config['workers']:
-                print('Creating worker configuration')
+                #print('Creating worker configuration')
                 wc = WorkerConfiguration(worker)
                 self._workers.append(wc)
                 
@@ -162,3 +164,6 @@ class Configuration:
 
     def core(self) -> CoreConfiguration:
         return self._core
+
+    def worker_sets(self) -> List[WorkerSetConfiguration]:
+        return self._worker_sets
