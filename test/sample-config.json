@@ -1,0 +1,35 @@
+{
+    "core": {
+        "log-dir-path": ".",
+        "log-format": "json",
+        "buffer-dir-path": "/tmp/"
+    },
+    "workers": [
+        {
+            "id": "SCU1",
+            "name": "Name of SCU1",
+            "ae-title": "SCU1",
+            "address": "127.0.0.1",
+            "port": 12345
+        }
+    ],
+    "scps": [
+        {
+            "id": "SCP1",
+            "name": "Name of SCP1",
+            "ae-title": "SCP1",
+            "address": "127.0.0.1",
+            "port": 23456
+        }
+    ],
+    "worker-sets": [
+        {
+            "id": "SET1",
+            "name": "Name of SET1",
+            "worker-ids": ["SCU1"],
+            "scp-ids": ["SCP1"],
+            "distribution": "round-robin",
+            "hash-method": "modulo"
+        }
+    ]
+}
