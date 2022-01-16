@@ -2,7 +2,8 @@
     "core": {
         "log-dir-path": ".",
         "log-format": "json",
-        "buffer-dir-path": "/tmp/"
+        "buffer-dir-path": "/tmp/",
+        "router-count": 2
     },
     "workers": [
         {
@@ -28,7 +29,8 @@
             "name": "Name of SET1",
             "worker-ids": ["SCU1"],
             "distribution": "round-robin",
-            "hash-method": "modulo"
+            "hash-method": "modulo",
+            "accepted-scp-ids": ["SCP1"]
         }
     ]
 }

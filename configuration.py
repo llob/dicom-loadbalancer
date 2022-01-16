@@ -10,6 +10,7 @@ class WorkerSetConfiguration:
         self._worker_ids = json_data['worker-ids']
         self._distribution = json_data['distribution']
         self._hash_method = json_data['hash-method']
+        self._accepted_scp_ids = json_data['accepted-scp-ids']
 
     @property
     def id(self):
@@ -31,11 +32,17 @@ class WorkerSetConfiguration:
     def hash_method(self):
         return self._hash_method
 
+    @property
+    def accepted_scp_ids(self):
+        return self._accepted_scp_ids
+
 class CoreConfiguration:
     def __init__(self, json_data: json) -> None:
+        print(json_data)
         self._log_dir_path = json_data['log-dir-path']
         self._log_format = json_data['log-format']
         self._buffer_dir_path = json_data['buffer-dir-path']
+        self._router_count = json_data['router-count']
 
     @property
     def log_dir_path(self):
@@ -48,6 +55,10 @@ class CoreConfiguration:
     @property
     def buffer_dir_path(self):
         return self._buffer_dir_path
+
+    @property
+    def router_count(self):
+        return self._router_count
 
 class SCPConfiguration:
     def __init__(self, json_data: json) -> None:
