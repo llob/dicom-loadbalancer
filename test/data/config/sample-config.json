@@ -30,7 +30,14 @@
             "worker-ids": ["SCU1"],
             "distribution": "round-robin",
             "hash-method": "modulo",
-            "accepted-scp-ids": ["SCP1"]
+            "accepted-scp-ids": ["SCP1"],
+            "header-requirements": [
+                {
+                    "tag": ["0x0008", "0x0070"],
+                    "requirement": "regexp-match",
+                    "regexp": "^GE.*"
+                }
+            ]
         }
     ]
 }

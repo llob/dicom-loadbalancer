@@ -1,7 +1,30 @@
 import os
 import json
-from typing import List
+from typing import List, Dict, Tuple
 import logging
+
+class HeaderRequirementConfiguration:
+
+    REGEXP_MATCH = "regexp-match"
+    ABSENT = "absent"
+    PRESENT = "present"
+
+    def __init__(self, json_data: json) -> None:
+        self._tag = (int(json_data['tag'][0], 16), int(json_data['tag'][1], 16))
+        self._requirement = json_data['requirement']
+        self._regexp = json_data['regexp']
+
+    @property
+    def tag(self) -> Tuple[int, int]:
+        return self._tag
+
+    @property
+    def requirement(self) -> str:
+        return self._requirement
+
+    @property
+    def regexp(self) -> str:
+        return self._regexp
 
 class WorkerSetConfiguration:
     def __init__(self, json_data: json) -> None:
@@ -11,17 +34,20 @@ class WorkerSetConfiguration:
         self._distribution = json_data['distribution']
         self._hash_method = json_data['hash-method']
         self._accepted_scp_ids = json_data['accepted-scp-ids']
+        self._header_requirements: List[HeaderRequirementConfiguration] = []
+        for json_obj in json_data['header-requirements']:
+            self._header_requirements.append(HeaderRequirementConfiguration(json_obj))
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self._id
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def worker_ids(self):
+    def worker_ids(self) -> List[str]:
         return self._worker_ids
 
     @property
@@ -33,8 +59,17 @@ class WorkerSetConfiguration:
         return self._hash_method
 
     @property
-    def accepted_scp_ids(self):
+    def accepted_scp_ids(self) -> List[str]:
         return self._accepted_scp_ids
+
+    @property
+    def header_requirements(self) -> List[HeaderRequirementConfiguration]:
+        '''
+        Get a list of requirements which must be satisfied by a DICOM instance
+        to be routed to this workerset
+        '''
+        return self._header_requirements
+
 
 class CoreConfiguration:
     def __init__(self, json_data: json) -> None:

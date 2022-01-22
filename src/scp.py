@@ -10,6 +10,7 @@ from pydicom.uid import ExplicitVRLittleEndian
 from pynetdicom import AE, debug_logger, evt
 from pynetdicom.sop_class import CTImageStorage
 from pynetdicom.sop_class import MRImageStorage
+import pynetdicom
 import configuration
 import logging
 import router
@@ -46,10 +47,10 @@ class SCP(threading.Thread):
         self._current_router_index = (self._current_router_index + 1) % len(self._routers)
         return self._routers[self._current_router_index]
 
-    def _handle_store(self, event):
+    def _handle_store(self, event: pynetdicom.events.Event):
         # Create a routable to encapsulate DICOM
         # and required meta data
-        r = routable.Routable(self._id, event)
+        r = routable.Routable(self._id, event.dataset)
         router = self._next_router()
         # Hand routable off to router in a buffered
         # non-blocking way
