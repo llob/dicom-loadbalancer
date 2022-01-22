@@ -19,4 +19,4 @@ class TestConfiguration(unittest.TestCase):
         self.assertIsNotNone(c.core())
 
 
-unittest.main()
+#unittest.main()
