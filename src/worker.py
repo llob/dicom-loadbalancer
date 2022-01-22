@@ -1,15 +1,20 @@
+'''
+Worker module
+'''
+import threading
 import datetime
 import threading
-from unicodedata import name
-import configuration
-import threading
 import logging
-import routable
+import queue
+from typing import List
+
 from pynetdicom import AE
 from pynetdicom.sop_class import CTImageStorage
 from pynetdicom.sop_class import MRImageStorage
-import queue
-from typing import List
+
+import configuration
+import routable
+import livenesschecker
 
 class Worker(threading.Thread):
     def __init__(self, config: configuration.WorkerConfiguration) -> None:
@@ -20,9 +25,10 @@ class Worker(threading.Thread):
         self._port = config.port
         self._ae_title = config.ae_title
         self._name = config.name
-        self._queue: queue.Queue[routable.Routable] = queue.Queue()
+        self._queue = queue.Queue()
         self._buffer: List[routable.Routable] = []
         self._last_send_time: datetime.datetime = datetime.datetime.now()
+        self._liveness_checker = livenesschecker.LivenessChecker(self._id, config, 10)
 
     @property
     def id(self) -> str:
@@ -32,11 +38,11 @@ class Worker(threading.Thread):
         if not self._buffer:
             # Do nothing if buffer is empty
             return
-        
+
         if (datetime.datetime.now() - self._last_send_time).seconds < 3:
             # We just stopped sending, so take a short break
             return
-        
+
         # Nothing preventing us from sending, so let's go
         ae = AE()
         ae.add_requested_context(MRImageStorage)
@@ -59,6 +65,7 @@ class Worker(threading.Thread):
 
     def run(self):
         self._logger.info(f'Starting worker {self._id}')
+        self._liveness_checker.start()
         while True:
             try:
                 r = self._queue.get(block=True, timeout=5)
