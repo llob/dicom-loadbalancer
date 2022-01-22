@@ -3,9 +3,11 @@ Liveness checker module
 '''
 import threading
 from time import sleep
-import configuration
 import logging
 import enum
+
+import configuration
+import livenesscheckerstrategy
 
 class LivenessStatus(enum.Enum):
     LIVE = 0
@@ -19,6 +21,7 @@ class LivenessChecker(threading.Thread):
     def __init__(
         self,
         id: str,
+        strategy: livenesscheckerstrategy.LivenessCheckerStrategy
         config: configuration.WorkerConfiguration,
         check_interval: int) -> None:
 
