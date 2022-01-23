@@ -2,6 +2,7 @@ import unittest
 import livenesschecker
 import pydicom
 import utils
+import configuration
 
 class TestLivenessStatus(unittest.TestCase):
     def test_enum_values(self):
@@ -31,6 +32,24 @@ class TestDicomEchoLivenessCheckerStrategy(unittest.TestCase):
         ss.shutdown()
 
 
+class MockLivenessCheckerStrategy(livenesschecker.LivenessCheckerStrategy):
+    def __init__(self, check_result):
+        self._check_result = check_result
+
+    def check(self):
+        return self._check_result
+
+class MockConfiguration(configuration.Configuration):
+    def __init__(self):
+        pass
 
 class TestLivenessChecker(unittest.TestCase):
-    pass
+
+    def test_ctor(self):
+        checker_id = "id1"
+        strategy = MockLivenessCheckerStrategy(livenesschecker.LivenessStatus.LIVE)
+        config = MockConfiguration()
+        lc = livenesschecker.LivenessChecker(checker_id, strategy, config, 1)
+        lc.start()
+        self.assertEqual(livenesschecker.LivenessStatus.LIVE, lc.status)
+        lc.shutdown()

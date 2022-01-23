@@ -80,6 +80,7 @@ class LivenessChecker(threading.Thread):
         self._confg = config
         self._strategy = strategy
         self._liveness_status = LivenessStatus.UNKNOWN
+        self._shutdown = False
         self._logger = logging.getLogger(__name__)
 
     def _set_liveness_status(self, status: LivenessStatus) -> None:
@@ -94,7 +95,12 @@ class LivenessChecker(threading.Thread):
         while True:
             self._check_liveness()
             sleep(self._check_interval)
+            if self._shutdown:
+                return
 
     @property
     def status(self) -> LivenessStatus:
         return self._liveness_status
+
+    def shutdown(self):
+        self._shutdown = True
