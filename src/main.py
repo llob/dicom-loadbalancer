@@ -1,10 +1,15 @@
 #!python3
 #
 # TODO:
-# - SCP/SCU configuration handling  ✅
-# - SCU implementations
 # - Buffer implementation
-# - Liveness checker
+# - Stoppable thread implementation
+# - Pylint cleaning
+# - Mypy in github workflow
+
+# Done:
+# - SCP/SCU configuration handling  ✅
+# - SCU implementations             ✅
+# - Liveness checker                ✅
 # - Structured logging              ✅
 # - Configuration loading           ✅
 

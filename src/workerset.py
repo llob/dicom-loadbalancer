@@ -66,7 +66,13 @@ class WorkerSet:
         # Determine worker index by hashing patient id to a number
         # To ensure longitudinal support, all data for a given
         # patient must be processed by the same worker
-        worker_index = self._hash_function("patient-id", len(self._workers))
+        patient_id_tag = (0x0010,0x0020)
+        if patient_id_tag not in data.dataset:
+            self._logger.warn('Dropping DICOM instance due to missing patient id')
+            return
+        patient_id = str(data.dataset[patient_id_tag].value)
+
+        worker_index = self._hash_function(patient_id, len(self._workers))
         worker = self._workers[worker_index]
         self._logger.debug(f'Allocating to worker {worker.id} at index {worker_index}')
         worker.process(data)
