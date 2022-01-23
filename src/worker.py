@@ -28,7 +28,11 @@ class Worker(threading.Thread):
         self._queue = queue.Queue()
         self._buffer: List[routable.Routable] = []
         self._last_send_time: datetime.datetime = datetime.datetime.now()
-        self._liveness_checker = livenesschecker.LivenessChecker(self._id, config, 10)
+        self._liveness_checker = livenesschecker.LivenessChecker(
+            self._id, 
+            livenesschecker.DicomEchoLivenessCheckerStrategy(self._address, self._port), 
+            config, 
+            10)
 
     @property
     def id(self) -> str:
