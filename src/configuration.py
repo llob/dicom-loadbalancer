@@ -295,7 +295,7 @@ class WorkerConfiguration(AbstractConfiguration):
         self._address = json_data['address']
         self._port = json_data['port']
         self._type = json_data['type']
-        
+        self._output_dir_path = json_data['output-dir-path']
 
     @property
     def id(self):
@@ -303,6 +303,13 @@ class WorkerConfiguration(AbstractConfiguration):
         Get the unique id of this worker
         '''
         return self._id
+
+    @property
+    def output_dir_path(self):
+        '''
+        Get the output dir path of worker (if type is local-storage)
+        '''
+        return self._output_dir_path
 
     @property
     def name(self):
@@ -344,7 +351,10 @@ class WorkerConfiguration(AbstractConfiguration):
             "type": "object",
             "name": "Worker",
             "properties": {
-                "type": { "type": "string" },
+                "type": { 
+                    "type": "string", 
+                    "enum": [WorkerConfiguration.TYPE_LOCAL_STORAGE, WorkerConfiguration.TYPE_SCU] 
+                },
                 "id": { "type": "string" },
                 "name": { "type": "string" },
                 "ae-title": { "type": "string" },
@@ -352,7 +362,7 @@ class WorkerConfiguration(AbstractConfiguration):
                 "port": { "type": "number" },
                 "output-dir-path": { "type": "string" }
             },
-            "required": ["type", "id", "name", "ae-title"]
+            "required": ["type", "id", "name", "ae-title", "address", "port", "output-dir-path"]
         }
 
 class ConfigurationError(BaseException):
