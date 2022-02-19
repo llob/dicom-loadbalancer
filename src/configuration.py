@@ -282,12 +282,13 @@ class SCPConfiguration(AbstractConfiguration):
             "required": ["id", "name", "ae-title", "address", "port"]
         }
 
-class WorkerConfiguration:
+class WorkerConfiguration(AbstractConfiguration):
 
     TYPE_SCU = "scu"
     TYPE_LOCAL_STORAGE = "local-storage"
 
     def __init__(self, json_data: json) -> None:
+        self._validate_json(json_data)
         self._id = json_data['id']
         self._name = json_data['name']
         self._ae_title = json_data['ae-title']
@@ -298,35 +299,70 @@ class WorkerConfiguration:
 
     @property
     def id(self):
+        '''
+        Get the unique id of this worker
+        '''
         return self._id
 
     @property
     def name(self):
+        '''
+        Get the friendly name of this worker
+        '''
         return self._name
 
     @property
     def ae_title(self):
+        '''
+        Get the AE title of this worker (if type is scu)
+        '''
         return self._ae_title
 
     @property
     def address(self):
+        '''
+        Get the SCP IP address (if type is scu)
+        '''
         return self._address
 
     @property
     def port(self):
+        '''
+        Get the SCP port (if type is scu)
+        '''
         return self._port
 
     @property
     def type(self):
+        '''
+        Get the type of worker
+        '''
         return self._type
+
+    def schema(self):
+        return {
+            "type": "object",
+            "name": "Worker",
+            "properties": {
+                "type": { "type": "string" },
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "ae-title": { "type": "string" },
+                "address": { "type": "string" },
+                "port": { "type": "number" },
+                "output-dir-path": { "type": "string" }
+            },
+            "required": ["type", "id", "name", "ae-title"]
+        }
 
 class ConfigurationError(BaseException):
     pass
 
 class Configuration:
-
+    '''
+    Entry point class for loading full configuration files
+    '''
     def __init__(self, path: str) -> None:
-
         self._workers: List[WorkerConfiguration] = []
         self._scps: List[SCPConfiguration] = []
         self._core: CoreConfiguration = None
@@ -341,6 +377,11 @@ class Configuration:
             self._read_config_file(path)
 
     def _read_config_dir(self, path) -> bool:
+        '''
+        Read all configuration files in specified directory.
+        If multiple configuration files are loaded, defined
+        entries are simply stacked on top of each other.
+        '''
         if os.path.isdir(path):
             files = [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
             for file in files:
@@ -349,12 +390,18 @@ class Configuration:
             raise BaseException(f'{path} is not a directory during attempt to load configuration')
 
     def _read_config_file(self, path) -> bool:
+        '''
+        Read a single config file and populate Configuration object
+        '''
         self._logger.info(f'Reading config from {path}')
         with open(path) as f:
             data = json.load(f)
             self._parse_config(data)
 
-    def _parse_config(self, config) -> bool:
+    def _parse_config(self, config: json) -> bool:
+        '''
+        Parse json configuration object
+        '''
         if 'core' in config:
             self._core = CoreConfiguration(config['core'])
         if 'worker-sets' in config:
@@ -372,16 +419,26 @@ class Configuration:
                 #print('Creating worker configuration')
                 wc = WorkerConfiguration(worker)
                 self._workers.append(wc)
-                
 
     def workers(self) -> List[WorkerConfiguration]:
+        '''
+        Get the list of workers defined in this configuration
+        '''
         return self._workers
 
     def scps(self) -> List[SCPConfiguration]:
+        '''
+        Get the list of SCPs configured'''
         return self._scps
 
     def core(self) -> CoreConfiguration:
+        '''
+        Get the core configuration
+        '''
         return self._core
 
     def worker_sets(self) -> List[WorkerSetConfiguration]:
+        '''
+        Get worker set configurations for all worker sets
+        '''
         return self._worker_sets
