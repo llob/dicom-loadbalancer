@@ -8,8 +8,7 @@ from typing import Dict
 from pydicom.uid import ExplicitVRLittleEndian
 
 from pynetdicom import AE, debug_logger, evt
-from pynetdicom.sop_class import CTImageStorage
-from pynetdicom.sop_class import MRImageStorage
+import pynetdicom.sop_class
 import pynetdicom
 import configuration
 import logging
@@ -62,15 +61,19 @@ class SCP(threading.Thread):
         return 0x0000
 
     def run(self):
-        self._logger.info(f'Starting SCP {self._id}')
+        self._logger.info(f'Starting SCP {self._id} on {self._address}:{self._port}')
         handlers = [
             (evt.EVT_C_STORE, self._handle_store),
             (evt.EVT_C_ECHO, self._handle_echo)
             ]
 
         self._ae = AE()
-        self._ae.add_supported_context(CTImageStorage, ExplicitVRLittleEndian)
-        self._ae.start_server(("127.0.0.1", 11112), block=True, evt_handlers=handlers)        
+        self._ae.add_supported_context("1.2.840.10008.1.1")
+        self._ae.add_supported_context(pynetdicom.sop_class.MRImageStorage, ExplicitVRLittleEndian)
+        self._ae.add_supported_context(pynetdicom.sop_class.CTImageStorage, ExplicitVRLittleEndian)
+        self._ae.add_supported_context(pynetdicom.sop_class.EnhancedCTImageStorage, ExplicitVRLittleEndian)
+        self._ae.add_supported_context(pynetdicom.sop_class.EnhancedMRImageStorage, ExplicitVRLittleEndian)
+        self._ae.start_server((self._address, self._port), block=True, evt_handlers=handlers)        
 
     @property
     def id(self):
