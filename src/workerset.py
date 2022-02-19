@@ -1,5 +1,5 @@
 import worker
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Callable
 import configuration
 import logging
 import routable
@@ -8,7 +8,7 @@ import pydicom
 import re
 
 class WorkerSet:
-    def __init__(self, config: configuration.WorkerSetConfiguration, all_workers: Dict[str, worker.Worker], hash_function) -> None:
+    def __init__(self, config: configuration.WorkerSetConfiguration, all_workers: Dict[str, worker.Worker], hash_function: Callable[[str], str]) -> None:
         self._worker_ids = config.worker_ids
         self._header_requirements = config.header_requirements
         self._workers: List[worker.Worker] = []
@@ -41,7 +41,7 @@ class WorkerSet:
         # If accepted SCP ids were specified and not empty
         # reject if source SCP not in list
         self._logger.debug(f'Finding worker for routable from {r.scp_id} (acceping routables from {str(self._accepted_scp_ids)}')
-        if self._accepted_scp_ids and r.scp_id not in self._accepted_scp_ids:
+        if r.scp_id not in self._accepted_scp_ids:
             return False
 
         # Check specified header requirements

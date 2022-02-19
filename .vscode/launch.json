@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Full configuration",
+            "type": "python",
+            "request": "launch",
+            "program": "src/main.py",
+            "console": "integratedTerminal",
+            "env": {"PYTHONPATH": "${workspaceFolder}${pathSeparator}src:${env:PYTHONPATH}"},
+            "args": [
+                "--config-file-path", "test/data/config/sample-config.json"
+            ]
+        },
+        {
+            "name": "Local storage configuration",
+            "type": "python",
+            "request": "launch",
+            "program": "src/main.py",
+            "console": "integratedTerminal",
+            "env": {"PYTHONPATH": "${workspaceFolder}${pathSeparator}src:${env:PYTHONPATH}"},
+            "args": [
+                "--config-file-path", "test/data/config/local-storage-workers-config.json"
+            ]
+        }        
+    ]
+}
