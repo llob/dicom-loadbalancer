@@ -3,17 +3,20 @@
 # TODO:
 # - Buffer implementation
 # - Stoppable thread implementation
-# - Pylint cleaning
 # - Mypy in github workflow
 # - Docker containerization
-# - JSON Schema validation of configuration
+
+# In progress
+# - Pylint cleaning
 
 # Done:
-# - SCP/SCU configuration handling  ✅
-# - SCU implementations             ✅
-# - Liveness checker                ✅
-# - Structured logging              ✅
-# - Configuration loading           ✅
+# - Worker type for storing files locally   ✅
+# - JSON Schema validation of configuration ✅
+# - SCP/SCU configuration handling          ✅
+# - SCU implementations                     ✅
+# - Liveness checker                        ✅
+# - Structured logging                      ✅
+# - Configuration loading                   ✅
 
 import logging
 import argparse
@@ -28,16 +31,22 @@ def default_config_file_path() -> str:
     return pathlib.Path(__file__).parent.absolute().joinpath('config.json').resolve()
 
 def process_config_file_path(args: argparse.Namespace) -> str:
-    config_file_path = default_config_file_path()
+    '''
+    Configure config file/dir path from command line arguments
+    '''
+    file_path = default_config_file_path()
     if 'config_file_path' not in args:
-        logging.info('No config-file-path specified, using {}'.format(config_file_path))
-    config_file_path = args.config_file_path
-    if not os.path.isfile(config_file_path):
-        logging.error('Config file {} does not exist'.format(config_file_path))
+        logging.info('No config-file-path specified, using {}'.format(file_path))
+    file_path = args.config_file_path
+    if not os.path.isfile(file_path):
+        logging.error('Config file {} does not exist'.format(file_path))
         sys.exit(1)
-    return config_file_path
+    return file_path
 
 def configure_logging() -> None:
+    '''
+    Set up python logging framework
+    '''
     logging.basicConfig(
         level=logging.DEBUG, 
         format='%(asctime)s %(name)-20s %(levelname)-8s %(message)s')
@@ -46,7 +55,7 @@ def configure_logging() -> None:
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='DICOM loadbalancer')
     parser.add_argument(
         '--config-file-path', 
         required=False, 
