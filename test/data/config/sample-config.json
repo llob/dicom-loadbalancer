@@ -7,11 +7,21 @@
     },
     "workers": [
         {
+            "type": "scu",
             "id": "SCU1",
             "name": "Name of SCU1",
             "ae-title": "SCU1",
             "address": "127.0.0.1",
             "port": 12345
+        },
+        {
+            "type": "local-storage",
+            "id": "LOCALSTORAGE1",
+            "name": "Name of LOCALSTORAGE1",
+            "ae-title": "",
+            "address": "",
+            "port": 0,
+            "output-dir-path": "/tmp/localstorage"
         }
     ],
     "scps": [
