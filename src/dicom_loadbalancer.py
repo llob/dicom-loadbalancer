@@ -1,3 +1,4 @@
+from distutils.command.config import config
 import configuration
 import worker
 import router
@@ -25,7 +26,14 @@ class DicomLoadBalancer:
     def _create_workers(self):
         self._logger.info('Creating workers')
         for worker_config in self._config.workers():
-            w = worker.Worker(worker_config)
+            w = None
+            if worker_config.type() == configuration.WorkerConfiguration.TYPE_SCU:
+                w = worker.SCUWorker(worker_config)
+            elif worker_config.type() == configuration.WorkerConfiguration.TYPE_LOCAL_STORAGE:
+                w = worker.LocalStorageWorker(worker_config)
+            else:
+                self._logger.error('Failed to start worker with unknown type {}'.format(worker_config.type()))
+                continue
             w.start()
             self._workers[w.id] = w
 
