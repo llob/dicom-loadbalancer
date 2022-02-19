@@ -7,6 +7,7 @@ import threading
 import logging
 import queue
 from typing import List
+import abc
 
 from pynetdicom import AE
 from pynetdicom.sop_class import CTImageStorage
@@ -16,16 +17,36 @@ import configuration
 import routable
 import livenesschecker
 
-class Worker(threading.Thread):
+class Worker(threading.Thread, metaclass=abc.ABCMeta):
     def __init__(self, config: configuration.WorkerConfiguration) -> None:
         threading.Thread.__init__(self)
         self._id = config.id
         self._logger = logging.getLogger(__name__)
+        self._name = config.name
+        self._queue = queue.Queue()
+        
+    @property
+    def id(self) -> str:
+        return self._id        
+
+    def process(self, data: routable.Routable):
+        self._queue.put(data)
+
+class LocalStorageWorker(Worker):
+    def __init__(self, config: configuration.WorkerConfiguration) -> None:
+        Worker.__init__(config)
+
+    def run(self):
+        self._logger.info(f'Starting local storage worker {self._id}')
+
+
+
+class SCUWorker(Worker):
+    def __init__(self, config: configuration.WorkerConfiguration) -> None:
+        Worker.__init__(config)
         self._address = config.address
         self._port = config.port
         self._ae_title = config.ae_title
-        self._name = config.name
-        self._queue = queue.Queue()
         self._buffer: List[routable.Routable] = []
         self._last_send_time: datetime.datetime = datetime.datetime.now()
         self._liveness_checker = livenesschecker.LivenessChecker(
@@ -33,10 +54,6 @@ class Worker(threading.Thread):
             livenesschecker.DicomEchoLivenessCheckerStrategy(self._address, self._port), 
             config, 
             10)
-
-    @property
-    def id(self) -> str:
-        return self._id
 
     def _send_buffer(self):
         if not self._buffer:
@@ -68,7 +85,7 @@ class Worker(threading.Thread):
 
 
     def run(self):
-        self._logger.info(f'Starting worker {self._id}')
+        self._logger.info(f'Starting SCU worker {self._id}')
         self._liveness_checker.start()
         while True:
             try:
@@ -79,6 +96,3 @@ class Worker(threading.Thread):
                 pass
             # Try to send, if something is in the buffer
             self._send_buffer()
-
-    def process(self, data: routable.Routable):
-        self._queue.put(data)
