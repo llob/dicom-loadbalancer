@@ -1,33 +1,79 @@
+'''
+Configuration management module
+'''
 import os
 import json
-from typing import List, Dict, Tuple
+from typing import List, Tuple, Dict
+import abc
 import logging
+import jsonschema
 
-class HeaderRequirementConfiguration:
+class AbstractConfiguration:
+    '''
+    Abstract super class for all configuration classes
+    '''
+    def _validate_json(self, json_object):
+        try:
+            jsonschema.validate(json_object, schema=self.schema())
+        except jsonschema.ValidationError as exception:
+            raise ConfigurationError(exception.message)
 
+    @abc.abstractmethod
+    def schema(self) -> Dict:
+        '''Get the JSON schema for this configuration section'''
+
+class HeaderRequirementConfiguration(AbstractConfiguration):
+    '''
+    Configuration class representing a single header
+    requirement
+    '''
     REGEXP_MATCH = "regexp-match"
     ABSENT = "absent"
     PRESENT = "present"
 
     def __init__(self, json_data: json) -> None:
+        self._validate_json(json_data)
         self._tag = (int(json_data['tag'][0], 16), int(json_data['tag'][1], 16))
         self._requirement = json_data['requirement']
         self._regexp = json_data['regexp']
 
     @property
     def tag(self) -> Tuple[int, int]:
+        '''
+        Get the DICOM tag associated with this requirement
+        '''
         return self._tag
 
     @property
     def requirement(self) -> str:
+        '''
+        Get the type of requirement
+        '''
         return self._requirement
 
     @property
     def regexp(self) -> str:
+        '''Get the regular expression associated with requirement'''
         return self._regexp
 
-class WorkerSetConfiguration:
+    def schema(self):
+        return {
+            "type": "object",
+            "title": "Header Requirement",
+            "properties": {
+                "tag": { "type": "array", "items": { "type": "string" }, "minItems": 2},
+                "requirement": { "type": "string" },
+                "regexp": { "type": "string" }
+            },
+            "required": ["tag", "requirement", "regexp"]
+        }
+
+class WorkerSetConfiguration(AbstractConfiguration):
+    '''
+    Class representing a single WorkerSet configuration
+    '''
     def __init__(self, json_data: json) -> None:
+        self._validate_json(json_data)
         self._id = json_data['id']
         self._name = json_data['name']
         self._worker_ids = json_data['worker-ids']
@@ -38,28 +84,86 @@ class WorkerSetConfiguration:
         for json_obj in json_data['header-requirements']:
             self._header_requirements.append(HeaderRequirementConfiguration(json_obj))
 
+    def schema(self):
+        return {
+            "type": "object",
+            "title": "Worker Set",
+            "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "worker-ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "type": "string" } 
+                },
+                "distribution": { "type": "string" },
+                "hash-method": { "type": "string" },
+                "accepted-scp-ids": { 
+                    "type": "array",
+                    "items": { "type": "string", "minItems": 1 } 
+                },
+                "header-requirements": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "tag": { "type": "array", "items": { "type": "string" }, "minItems": 2},
+                            "requirement": { "type": "string" },
+                            "regexp": { "type": "string" }
+                        }
+                    }
+                }
+            },
+            "required": [
+                "id",
+                "worker-ids",
+                "distribution",
+                "hash-method",
+                "accepted-scp-ids",
+                "header-requirements"]
+        }
+
     @property
     def id(self) -> str:
+        '''
+        The unique id of the worker set
+        '''
         return self._id
 
     @property
     def name(self) -> str:
+        '''
+        The friendly name of the worker set
+        '''
         return self._name
 
     @property
     def worker_ids(self) -> List[str]:
+        '''
+        The list of worker ids included in the worker set
+        '''
         return self._worker_ids
 
     @property
     def distribution(self):
+        '''
+        The distribution algorithm
+        '''
         return self._distribution
 
     @property
     def hash_method(self):
+        '''
+        The hash method used to associate incoming studies
+        with workers
+        '''
         return self._hash_method
 
     @property
     def accepted_scp_ids(self) -> List[str]:
+        '''
+        The list of SCP ids accepted by this worker set
+        '''
         return self._accepted_scp_ids
 
     @property
@@ -71,9 +175,9 @@ class WorkerSetConfiguration:
         return self._header_requirements
 
 
-class CoreConfiguration:
+class CoreConfiguration(AbstractConfiguration):
     def __init__(self, json_data: json) -> None:
-        print(json_data)
+        self._validate_json(json_data)
         self._log_dir_path = json_data['log-dir-path']
         self._log_format = json_data['log-format']
         self._buffer_dir_path = json_data['buffer-dir-path']
@@ -81,22 +185,48 @@ class CoreConfiguration:
 
     @property
     def log_dir_path(self):
+        '''
+        Path to the directory where log files are written
+        '''
         return self._log_dir_path
 
     @property
     def log_format(self):
+        '''
+        Logging format to use
+        '''
         return self._log_format
 
     @property
     def buffer_dir_path(self):
+        '''
+        Temporary dir used for buffering incoming files
+        '''
         return self._buffer_dir_path
 
     @property
     def router_count(self):
+        '''
+        Number of routing threads to spin up
+        '''
         return self._router_count
 
-class SCPConfiguration:
+    def schema(self):
+        return {
+            "type": "object",
+            "title": "Core",
+            "properties": {
+                "log-dir-path": { "type": "string" },
+                "log-format": { "type": "string" },
+                "buffer-dir-path": { "type": "string" },
+                "router-count": { "type": "number", "minimum": 1 }
+            },
+            "required": ["log-dir-path", "log-format", "buffer-dir-path", "router-count"]
+        }
+
+class SCPConfiguration(AbstractConfiguration):
     def __init__(self, json_data: json) -> None:
+        self._validate_json(json_data)
         self._id = json_data['id']
         self._name = json_data['name']
         self._ae_title = json_data['ae-title']
@@ -105,31 +235,66 @@ class SCPConfiguration:
 
     @property
     def id(self):
+        '''
+        Get the unique id of this SCP
+        '''
         return self._id
 
     @property
     def name(self):
+        '''
+        Get the friendly name of this SCP
+        '''
         return self._name
 
     @property
     def ae_title(self):
+        '''
+        Get the AE title of this SCP
+        '''
         return self._ae_title
 
     @property
     def address(self):
+        '''
+        Get the bind IP address of this SCP
+        '''
         return self._address
 
     @property
     def port(self):
+        '''
+        Get the bind port of this SCP
+        '''
         return self._port
+
+    def schema(self):
+        return {
+            "type": "object",
+            "name": "SCP",
+            "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "ae-title": { "type": "string" },
+                "address": { "type": "string" },
+                "port": { "type": "number", "minimum": 1 }
+            },
+            "required": ["id", "name", "ae-title", "address", "port"]
+        }
 
 class WorkerConfiguration:
+
+    TYPE_SCU = "scu"
+    TYPE_LOCAL_STORAGE = "local-storage"
+
     def __init__(self, json_data: json) -> None:
         self._id = json_data['id']
         self._name = json_data['name']
         self._ae_title = json_data['ae-title']
         self._address = json_data['address']
         self._port = json_data['port']
+        self._type = json_data['type']
+        
 
     @property
     def id(self):
@@ -150,6 +315,13 @@ class WorkerConfiguration:
     @property
     def port(self):
         return self._port
+
+    @property
+    def type(self):
+        return self._type
+
+class ConfigurationError(BaseException):
+    pass
 
 class Configuration:
 
